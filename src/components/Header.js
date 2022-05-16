@@ -2,6 +2,8 @@ import React, { useState, useCallback, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import styled from "styled-components";
 import { AiOutlineSearch } from "react-icons/ai";
+import { useDispatch, useSelector } from "react-redux";
+import { getSearch, getSearchInit } from "../modules/common";
 
 const Base = styled.header`
   width: 100%;
@@ -172,13 +174,44 @@ const SignUp = styled.button`
 `;
 
 const Header = () => {
+  const [searchKeyword, setSearchKeyword] = useState("");
+
+  const search = useSelector((state) => state.common.search);
+  const dispatch = useDispatch();
+
+  const getSearchList = useCallback(
+    (keyword) => {
+      dispatch(getSearch(keyword));
+    },
+    [dispatch]
+  );
+
+  const getSearchInitList = useCallback(
+    (keyword) => {
+      dispatch(getSearchInit());
+    },
+    [dispatch]
+  );
+
+  const handleKeyword = (e) => {
+    setSearchKeyword(e.target.value);
+  };
+
+  useEffect(() => {
+    if (searchKeyword) {
+      getSearchList(searchKeyword);
+    } else {
+      getSearchInitList();
+    }
+  }, [searchKeyword, getSearchList, getSearchInitList]);
+
   return (
     <Base>
       <Navigation>
         <MenuListWrapper>
           <MenuList>
             <Menu>
-              <Link href="/">
+              <Link href={`/${process.env.REACT_APP_HOST}`}>
                 <TextLogo>
                   <span className="primary">MY</span>
                   <span>WATCHA</span>
@@ -190,7 +223,7 @@ const Header = () => {
                 className={(navData) =>
                   navData.isActive ? "active" : undefined
                 }
-                to="/"
+                to={`/${process.env.REACT_APP_HOST}`}
               >
                 영화
               </MenuButton>
@@ -211,13 +244,28 @@ const Header = () => {
                   <SearchForm>
                     <SearchLabel>
                       <AiOutlineSearch />
-                      <SearchInput placeholder="콘텐츠, 인물, 컬렉션, 유저를 검색해보세요." />
+                      <SearchInput
+                        placeholder="콘텐츠, 인물, 컬렉션, 유저를 검색해보세요."
+                        onChange={handleKeyword}
+                      />
                     </SearchLabel>
                   </SearchForm>
                 </SearchFormWrapper>
               </SearchContainer>
               <SearchResultWrapper>
-                <SearchResultList></SearchResultList>
+                <SearchResultList>
+                  {search &&
+                    search.results.map((searchItem) => (
+                      <Link
+                        href={`/movie/${searchItem.id}`}
+                        key={searchItem.id}
+                      >
+                        <SearchResultListItem>
+                          {searchItem.title}
+                        </SearchResultListItem>
+                      </Link>
+                    ))}
+                </SearchResultList>
               </SearchResultWrapper>
             </SearchMenu>
             <Menu>
